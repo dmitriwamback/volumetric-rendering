@@ -4,6 +4,7 @@ uniform sampler2D position;
 uniform sampler2D distanceToCamera;
 uniform sampler2D normal;
 uniform sampler2D albedo;
+uniform sampler3D noiseTexture;
 out vec4 fragc;
 
 uniform mat4 inverseProjection;
@@ -18,28 +19,57 @@ in prop {
 } fs_in;
 
 
-float sdBox(vec3 p, vec3 b) {
-    vec3 d = abs(p - vec3(0.0, 0.0, 2.0)) - b;
-    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+vec3 boxPosition = vec3(0, 0, -4.0);
+vec3 boxMin = boxPosition - vec3(2.0, 2.0, 2.0) * 1;
+vec3 boxMax = boxPosition + vec3(2.0, 2.0, 2.0) * 1;
+
+bool intersectBox(vec3 ro, vec3 rd, out float tNear, out float tFar) {
+    vec3 invDir = 1.0 / rd;
+    vec3 t0s = (boxMin - ro) * invDir;
+    vec3 t1s = (boxMax - ro) * invDir;
+
+    vec3 tsmaller = min(t0s, t1s);
+    vec3 tbigger = max(t0s, t1s);
+
+    tNear = max(max(tsmaller.x, tsmaller.y), tsmaller.z);
+    tFar = min(min(tbigger.x, tbigger.y), tbigger.z);
+
+    return tFar >= max(tNear, 0.0);
 }
 
 float rayMarch(vec3 ro, vec3 rd, out vec3 hitPos) {
-    float t = 0.0;
-    const float maxDistance = 100.0;
-    const int maxSteps = 100;
-    const float epsilon = 0.001;
-    vec3 boxHalfSize = vec3(1.0);
 
-    for (int i = 0; i < maxSteps; i++) {
+    float tNear, tFar;
+    if (!intersectBox(ro, rd, tNear, tFar)) {
+        hitPos = vec3(0.0);
+        return -1.0;
+    }
+
+    float t = max(tNear, 0.0);
+    float stepSize = 0.01;
+
+    while (t < tFar) {
         vec3 p = ro + rd * t;
-        float dist = sdBox(p, boxHalfSize);
-        if (dist < epsilon) {
+        vec3 localP = p + vec3(0.0, 0.0, 2.0);
+        vec3 texCoord = (p - boxMin) / (boxMax - boxMin);
+
+        float n = texture(noiseTexture, texCoord).r;
+        
+        if (n < 0.5) {
+            t += stepSize;
+            continue;
+        }
+
+        float band = 0.05;
+        float density = smoothstep(0.5 - band, 0.5 + band, n);
+
+        if (density > 0.5) {
             hitPos = p;
             return t;
         }
-        t += dist;
-        if (t > maxDistance) break;
+        t += stepSize;
     }
+
     hitPos = vec3(0.0);
     return -1.0;
 }
@@ -55,55 +85,20 @@ vec3 getRayDirection(vec2 fragCoord) {
 }
 
 
-// Hash function
-vec3 hash3(vec3 p) {
-    p = vec3(dot(p, vec3(127.1, 311.7, 74.7)),
-             dot(p, vec3(269.5, 183.3, 246.1)),
-             dot(p, vec3(113.5, 271.9, 124.6)));
-    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
-}
-
-// Value noise
-float noise(vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);
-
-    // Smooth interpolation
-    vec3 u = f * f * (3.0 - 2.0 * f);
-
-    // Trilinear interpolation
-    return mix(
-        mix(
-            mix(dot(hash3(i + vec3(0, 0, 0)), f - vec3(0, 0, 0)),
-                dot(hash3(i + vec3(1, 0, 0)), f - vec3(1, 0, 0)), u.x),
-            mix(dot(hash3(i + vec3(0, 1, 0)), f - vec3(0, 1, 0)),
-                dot(hash3(i + vec3(1, 1, 0)), f - vec3(1, 1, 0)), u.x),
-            u.y),
-        mix(
-            mix(dot(hash3(i + vec3(0, 0, 1)), f - vec3(0, 0, 1)),
-                dot(hash3(i + vec3(1, 0, 1)), f - vec3(1, 0, 1)), u.x),
-            mix(dot(hash3(i + vec3(0, 1, 1)), f - vec3(0, 1, 1)),
-                dot(hash3(i + vec3(1, 1, 1)), f - vec3(1, 1, 1)), u.x),
-            u.y),
-        u.z);
-}
-
-
-
 void main() {
-    float depth = 1 - texture(distanceToCamera, fs_in.uv).w;
-
+    float depth = texture(distanceToCamera, fs_in.uv).w;
     vec3 rayDir = getRayDirection(gl_FragCoord.xy);
     vec3 hitPos;
     float dist = rayMarch(cameraPosition, rayDir, hitPos);
 
+    vec4 viewHit = inverseLookAt * vec4(hitPos, 1.0);
+    float rayDepth = -viewHit.z;
+
     if (dist > 0.0) {
-        float d = noise(hitPos);
-        if (d > 0.0) fragc = vec4(1.0, 0.5, 0.2, 0.5);
-        else fragc = texture(normal, fs_in.uv);
+        float n = 1;
+        fragc = vec4(vec3(hitPos.y + 2)/4.0 * n, 1.0);
     }
     else {
         fragc = texture(normal, fs_in.uv);
     }
-    fragc.rgb = 1 - fragc.rgb;
 }

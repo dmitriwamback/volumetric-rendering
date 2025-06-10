@@ -15,7 +15,7 @@ public:
     static RayMarchingQuad Create();
     void Render(Shader shader, DeferredRenderer renderer);
 private:
-    uint32_t vertexArrayObject, vertexBufferObject;
+    uint32_t vertexArrayObject, vertexBufferObject, noiseBoxTexture;
 };
 
 RayMarchingQuad RayMarchingQuad::Create() {
@@ -30,6 +30,30 @@ RayMarchingQuad RayMarchingQuad::Create() {
         {{ 1.0f, -1.0f,  0.0f}, { 0,  0,  1}, {1, 0}},
         {{-1.0f, -1.0f,  0.0f}, { 0,  0,  1}, {0, 0}},
     };
+    
+    int size = 128;
+    
+    std::vector<float> noiseValues(size * size * size);
+    
+    srand(static_cast<unsigned int>(std::time(nullptr)));
+    float seed = rand()%10000000;
+    
+    for (int x = 0; x < size; x++) {
+        for (int y = 0; y < size; y++) {
+            for (int z = 0; z < size; z++) {
+                noiseValues[x + y * size + z * size * size] = noiseLayer((x + seed)*0.00843, (y + seed)*0.00843, 1.5f, 0.7f, 20, (z + seed)*0.00843) * 0.5f + 0.5f;
+            }
+        }
+    }
+    
+    glGenTextures(1, &quad.noiseBoxTexture);
+    glBindTexture(GL_TEXTURE_3D, quad.noiseBoxTexture);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, size, size, size, 0, GL_RED, GL_FLOAT, noiseValues.data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     
     glGenVertexArrays(1, &quad.vertexArrayObject);
     glBindVertexArray(quad.vertexArrayObject);
@@ -81,6 +105,10 @@ void RayMarchingQuad::Render(Shader shader, DeferredRenderer renderer) {
     glActiveTexture(GL_TEXTURE3);
     shader.SetInt("albedo", 3);
     glBindTexture(GL_TEXTURE_2D, renderer.albedo);
+    
+    glActiveTexture(GL_TEXTURE4);
+    shader.SetInt("noiseTexture", 4);
+    glBindTexture(GL_TEXTURE_3D, noiseBoxTexture);
     
     glBindVertexArray(vertexArrayObject);
     glDrawArrays(GL_TRIANGLES, 0, 6);

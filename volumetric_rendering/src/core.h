@@ -22,6 +22,8 @@ GLFWwindow* window;
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "rendering/noise.h"
+
 #include "object/vertex.h"
 #include "object/shader.h"
 #include "object/cube.h"
