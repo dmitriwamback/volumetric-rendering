@@ -11,12 +11,14 @@ uniform mat4 model;
 out prop {
     vec3 normal;
     vec3 fragp;
+    vec2 uv;
 } vs_out;
 
 void main() {
     vs_out.normal = normalize(transpose(inverse(mat3(model))) * normal);
     vs_out.fragp = vec3(model * vec4(position, 1.0));
+    vs_out.uv = uv;
 
-    gl_Position = projection * lookAt * model * vec4(position, 1.0);
+    gl_Position = vec4(position.xy, 0.0, 1.0);
     gl_PointSize = 20.0;
 }

@@ -14,6 +14,7 @@ public:
     void Use();
     void SetMatrix4(const char* variableName, glm::mat4& mat);
     void SetVector3(const char* variableName, glm::vec3 vec);
+    void SetInt(const char* variableName, int value);
 private:
     static void CompileShader(int shader, const char* source);
     static void PrintShaderLog(int shader);
@@ -95,6 +96,11 @@ void Shader::SetMatrix4(const char* variableName, glm::mat4& mat) {
 void Shader::SetVector3(const char* variableName, glm::vec3 vec) {
     int location = glGetUniformLocation(program, variableName);
     glUniform3fv(location, 1, &vec[0]);
+}
+
+void Shader::SetInt(const char *variableName, int value) {
+    int location = glGetUniformLocation(program, variableName);
+    glUniform1i(location, value);
 }
 
 #endif /* shader_h */
