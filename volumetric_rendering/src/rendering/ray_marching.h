@@ -51,6 +51,21 @@ RayMarchingQuad RayMarchingQuad::Create() {
 void RayMarchingQuad::Render(Shader shader, DeferredRenderer renderer) {
     shader.Use();
     
+    
+    glm::mat4 inverseProjection = glm::inverse(camera.projection);
+    glm::mat4 inverseLookAt = glm::inverse(camera.lookAt);
+    glm::vec3 cameraPosition = camera.position;
+    
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    
+    glm::vec2 screenSize = glm::vec2(width, height);
+    
+    shader.SetMatrix4("inverseProjection", inverseProjection);
+    shader.SetMatrix4("inverseLookAt", inverseLookAt);
+    shader.SetVector3("cameraPosition", cameraPosition);
+    shader.SetVector2("screenSize", screenSize);
+    
     glActiveTexture(GL_TEXTURE0);
     shader.SetInt("position", 0);
     glBindTexture(GL_TEXTURE_2D, renderer.position);
