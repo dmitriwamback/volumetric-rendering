@@ -6,9 +6,10 @@
 //
 
 #include <iostream>
+#include "src/core.h"
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+    
+    initialize();
     return 0;
 }
