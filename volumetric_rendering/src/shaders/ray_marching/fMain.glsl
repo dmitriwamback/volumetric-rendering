@@ -20,8 +20,10 @@ in prop {
 
 
 vec3 boxPosition = vec3(0, 0, -4.0);
-vec3 boxMin = boxPosition - vec3(2.0, 2.0, 2.0) * 1;
-vec3 boxMax = boxPosition + vec3(2.0, 2.0, 2.0) * 1;
+vec3 boxMin = boxPosition - vec3(2.0, 1.0, 2.0) * 1;
+vec3 boxMax = boxPosition + vec3(2.0, 1.0, 2.0) * 1;
+
+float objectDensity = 0;
 
 bool intersectBox(vec3 ro, vec3 rd, out float tNear, out float tFar) {
     vec3 invDir = 1.0 / rd;
@@ -50,28 +52,24 @@ float rayMarch(vec3 ro, vec3 rd, out vec3 hitPos) {
 
     while (t < tFar) {
         vec3 p = ro + rd * t;
-        vec3 localP = p + vec3(0.0, 0.0, 2.0);
         vec3 texCoord = (p - boxMin) / (boxMax - boxMin);
 
         float n = texture(noiseTexture, texCoord).r;
         
-        if (n < 0.5) {
-            t += stepSize;
-            continue;
-        }
+        float density = clamp(pow(n, 1.5) * 1.2 - 0.2, 0.0, 1.0);
 
-        float band = 0.05;
-        float density = smoothstep(0.5 - band, 0.5 + band, n);
-
-        if (density > 0.5) {
-            hitPos = p;
-            return t;
-        }
+        objectDensity += density * stepSize;
         t += stepSize;
     }
 
-    hitPos = vec3(0.0);
-    return -1.0;
+    if (objectDensity > 0.0) {
+        hitPos = ro + rd * tNear;
+        return objectDensity;
+    }
+    else {
+        hitPos = vec3(0.0);
+        return -1.0;
+    }
 }
 
 vec3 getRayDirection(vec2 fragCoord) {
@@ -93,10 +91,12 @@ void main() {
 
     vec4 viewHit = inverseLookAt * vec4(hitPos, 1.0);
     float rayDepth = -viewHit.z;
+    
+    vec3 background = texture(normal, fs_in.uv).rgb;
 
     if (dist > 0.0) {
-        float n = 1;
-        fragc = vec4(vec3(hitPos.y + 2)/4.0 * n, 1.0);
+        float transmittance = exp(-objectDensity * 1.75);
+        fragc = vec4(mix(background, vec3(1.0), 1.0 - transmittance), 1.0);
     }
     else {
         fragc = texture(normal, fs_in.uv);
