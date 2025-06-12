@@ -25,7 +25,7 @@ in prop {
 
 // ----- Cloud Box ----- //
 vec3 boxPosition = vec3(0.0, 0.0, -4.0);
-vec3 halfSize = vec3(2.0, 2.0, 2.0);
+vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.5;
 vec3 boxMin = boxPosition - halfSize;
 vec3 boxMax = boxPosition + halfSize;
 
@@ -50,7 +50,16 @@ bool intersectBox(vec3 RO, vec3 RD, out float tNear, out float tFar) {
 
 
 float phaseSchlick(float cosTheta, float k) {
-    return (1.0 - k * k) / (4.0 * 3.141592 * pow(1.0 + k * (k - 2.0 * cosTheta), 1.5));
+    cosTheta = clamp(cosTheta, -1.0, 1.0);
+
+    k = clamp(k, 0.0, 0.999);
+
+    float denom = 1.0 + k * (k - 2.0 * cosTheta);
+    denom = max(denom, 0.001);
+
+    float result = (1.0 - k * k) / (4.0 * 3.141592 * pow(denom, 1.5));
+
+    return max(result, 1.0);
 }
 
 // ----------------------------------------------------------- //
@@ -107,7 +116,7 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         
         // Get ray information and texture coordinates
         vec3 rayPosition = rayOrigin + rayDirection * t;
-        vec3 uv = (rayPosition - boxMin) / (boxMax - boxMin);
+        vec3 uv = ((rayPosition - boxPosition) / halfSize) * 0.5 + 0.5;
         
         if (any(lessThan(uv, vec3(0.0))) || any(greaterThan(uv, vec3(1.0)))) {
             t += stepSize;
@@ -117,11 +126,20 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         // Sample the from the 3D noise (Voronoi noise + Layered noise)
         float sampledNoise = texture(noiseTexture, uv).r;
 
-        // Compute the density
-        vec3 centerOffset = (rayPosition - boxPosition) / halfSize;
-        float radialFalloff = exp(-dot(centerOffset, centerOffset) * 1.5);
         
-        float density = clamp(pow(sampledNoise, 1.4) * radialFalloff * 3.0 - 0.2, 0.0, 1.0);
+        float margin = 0.1;
+
+        float fadeX = smoothstep(0.0, margin, uv.x) * smoothstep(1.0, 1.0 - margin, uv.x);
+        float fadeY = smoothstep(0.0, margin, uv.y) * smoothstep(1.0, 1.0 - margin, uv.y);
+        float fadeZ = smoothstep(0.0, margin, uv.z) * smoothstep(1.0, 1.0 - margin, uv.z);
+
+        float edgeFade = fadeX * fadeY * fadeZ;
+
+        float radialFalloff = 1.0; // no spherical fade
+
+        float density = clamp(pow(sampledNoise, 2.0) * 3.0 - 0.2, 0.0, 1.0);
+        density *= edgeFade;
+        
         if (density < 0.01) {
             t += stepSize;
             continue;
@@ -145,7 +163,7 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
     
     if (opacity > 0.0) {
         hitPosition = rayOrigin + rayDirection * t;
-        cloudColor = color;
+        cloudColor = color * 1.5;
         return opacity;
     }
     else {
@@ -185,6 +203,9 @@ void main() {
     float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor);
 
     vec3 background = texture(normal, fs_in.uv).rgb;
+    
+    vec3 toneMappedCloud = cloudColor / (cloudColor + vec3(1.0));
+    toneMappedCloud = pow(toneMappedCloud, vec3(1.0 / 3.2));
 
-    fragc = (opacity > 0.0) ? vec4(mix(background, vec3(1.0), opacity), 1.0) : texture(normal, fs_in.uv);
+    fragc = (opacity > 0.0) ? vec4(mix(background, toneMappedCloud, opacity), 1.0) : texture(normal, fs_in.uv);
 }

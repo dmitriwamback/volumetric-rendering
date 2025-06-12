@@ -75,7 +75,7 @@ void initialize() {
         std::cout << camera.position.x << " " << camera.position.y << " " << camera.position.z << '\n';
         
         renderer.Bind();
-        glClearColor(0.3, 0.3, 0.3, 0.0);
+        glClearColor(0.4, 0.7, 1.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.Use();
         shader.SetMatrix4("projection", camera.projection);

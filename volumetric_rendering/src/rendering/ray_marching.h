@@ -38,10 +38,28 @@ RayMarchingQuad RayMarchingQuad::Create() {
     srand(static_cast<unsigned int>(std::time(nullptr)));
     float seed = rand()%10000000;
     
+    int sampleSize = 100;
+    float xsample[sampleSize], ysample[sampleSize], zsample[sampleSize];
+
+    for (int i = 0; i < sampleSize; i++) {
+        float x = (float)rand() / RAND_MAX,
+              y = (float)rand() / RAND_MAX,
+              z = (float)rand() / RAND_MAX;
+
+        xsample[i] = x;
+        ysample[i] = y;
+        zsample[i] = z;
+    }
+
+    float ***voronoiMap = voronoi(xsample, ysample, zsample, sampleSize, size);
+    
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
             for (int z = 0; z < size; z++) {
-                noiseValues[x + y * size + z * size * size] = noiseLayer((x + seed)*0.004215, (y + seed)*0.004215, 1.5f, 0.7f, 20, (z + seed)*0.004215) * 0.5f + 0.5f;
+                
+                float voronoiValue = 1 - voronoiMap[x][y][z];
+                
+                noiseValues[x + y * size + z * size * size] = (noiseLayer((x + seed)*0.004215, (y + seed)*0.004215, 1.5f, 0.7f, 20, (z + seed)*0.004215) * 0.5f + 0.5f) * voronoiValue;
             }
         }
     }
