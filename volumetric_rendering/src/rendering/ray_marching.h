@@ -52,6 +52,7 @@ RayMarchingQuad RayMarchingQuad::Create() {
     }
 
     float ***voronoiMap = voronoi(xsample, ysample, zsample, sampleSize, size);
+    float frequency = 0.00421f;
     
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
@@ -59,7 +60,7 @@ RayMarchingQuad RayMarchingQuad::Create() {
                 
                 float voronoiValue = 1 - voronoiMap[x][y][z];
                 
-                noiseValues[x + y * size + z * size * size] = (noiseLayer((x + seed)*0.004215, (y + seed)*0.004215, 1.5f, 0.7f, 20, (z + seed)*0.004215) * 0.5f + 0.5f) * voronoiValue;
+                noiseValues[x + y * size + z * size * size] = (noiseLayer((x + seed) * frequency, (y + seed) * frequency, 1.5f, 0.7f, 20, (z + seed) * frequency) * 0.5f + 0.5f) * voronoiValue;
             }
         }
     }

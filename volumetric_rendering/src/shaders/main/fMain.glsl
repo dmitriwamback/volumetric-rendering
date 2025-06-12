@@ -17,6 +17,7 @@ void main() {
     fragp = vec4(fs_in.fragp, 1.0);
     normal = vec4(fs_in.normal, 1.0);
 
-    dst = gl_FragCoord;
+    float linearDepth = length(fs_in.fragp - cameraPosition);
+    dst = vec4(linearDepth, 0.0, 0.0, 1.0);
 }
 

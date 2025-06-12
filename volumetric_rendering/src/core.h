@@ -78,6 +78,7 @@ void initialize() {
         glClearColor(0.4, 0.7, 1.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.Use();
+        shader.SetVector3("cameraPosition", camera.position);
         shader.SetMatrix4("projection", camera.projection);
         shader.SetMatrix4("lookAt", camera.lookAt);
         cube.Render(shader);

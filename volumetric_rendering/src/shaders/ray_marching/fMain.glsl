@@ -29,6 +29,8 @@ vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.5;
 vec3 boxMin = boxPosition - halfSize;
 vec3 boxMax = boxPosition + halfSize;
 
+vec3 cloudAmbient = vec3(0.2, 0.3, 1.0);
+
 
 // ----------------------------------------------------------- //
 // ----------------------------------------------------------- //
@@ -84,14 +86,14 @@ float computeLightTransmittance(vec3 p, vec3 lightDirection) {
         t += stepSize;
     }
 
-    return exp(-attenuation * 1.5);
+    return exp(-attenuation * 10.1);
 }
 
 // ----------------------------------------------------------- //
 // ----------------------------------------------------------- //
 
 // Main ray marching function
-float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3 cloudColor) {
+float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3 cloudColor, float depth) {
     
     // Get the closest and farthest points in the imaginary cube
     float tNear, tFar;
@@ -104,9 +106,9 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
     // Constants
     const float stepSize = 0.05;
     const float k = 0.5;
-    const int maxSteps = 128;
     const vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.5));
     
+    int maxSteps = int(min(128.0, (tFar - tNear) / stepSize));
     float t = max(tNear, 0.0);
     float opacity = 0.0;
     vec3 color = vec3(0.0);
@@ -141,7 +143,7 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         density *= edgeFade;
         
         if (density < 0.01) {
-            t += stepSize;
+            t += stepSize * 4.0;
             continue;
         }
         
@@ -152,7 +154,9 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         
         // Calculate scatter color and opacity
         vec3 lightColor = vec3(1.0);
-        vec3 scatter = lightColor * transmittance * phase * density;
+        
+        vec3 ambient = cloudAmbient * density;
+        vec3 scatter = lightColor * transmittance * phase * density + ambient;
         
         color += (1.0 - opacity) * scatter * stepSize;
         opacity += (1.0 - opacity) * density * stepSize;
@@ -163,7 +167,7 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
     
     if (opacity > 0.0) {
         hitPosition = rayOrigin + rayDirection * t;
-        cloudColor = color * 1.5;
+        cloudColor = color * 1.75;
         return opacity;
     }
     else {
@@ -194,13 +198,14 @@ void main() {
     
     float depth = texture(distanceToCamera, gl_FragCoord.xy / screenSize).r;
     float tNear, tFar;
+        
     if (!intersectBox(cameraPosition, rayDirection, tNear, tFar)) {
         fragc = texture(normal, fs_in.uv);
         return;
     }
     
     vec3 hitPosition, cloudColor;
-    float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor);
+    float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor, depth);
 
     vec3 background = texture(normal, fs_in.uv).rgb;
     
