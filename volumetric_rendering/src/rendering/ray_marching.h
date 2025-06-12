@@ -41,7 +41,7 @@ RayMarchingQuad RayMarchingQuad::Create() {
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
             for (int z = 0; z < size; z++) {
-                noiseValues[x + y * size + z * size * size] = noiseLayer((x + seed)*0.00843, (y + seed)*0.00843, 1.5f, 0.7f, 20, (z + seed)*0.00843) * 0.5f + 0.5f;
+                noiseValues[x + y * size + z * size * size] = noiseLayer((x + seed)*0.004215, (y + seed)*0.004215, 1.5f, 0.7f, 20, (z + seed)*0.004215) * 0.5f + 0.5f;
             }
         }
     }

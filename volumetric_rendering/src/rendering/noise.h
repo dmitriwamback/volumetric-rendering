@@ -83,7 +83,7 @@ double noise(double x, double y, double z) {
 
 double noiseLayer(double x, double y, double lacunarity, double persistance, int octaves, double seed) {
     
-    double freq = 1.0,
+    double freq = 2.0,
            ampl = 2.0;
     
     double n = 0;
