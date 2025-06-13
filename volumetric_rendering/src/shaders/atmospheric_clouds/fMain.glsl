@@ -207,16 +207,24 @@ void main() {
     vec3 viewDir = computeRayDirection(gl_FragCoord.xy);
     float y = viewDir.y;
 
-    vec3 skyColor;
-    if (y > 0.0) {
-        float t = pow(y, 0.65);
-        skyColor = mix(horizonColor, zenithColor, t);
-    } else {
-        float t = pow(-y, 0.7);
-        skyColor = mix(horizonColor, groundColor, t);
-    }
+    if (depth <= 0.0001) {
+        vec3 viewDir = computeRayDirection(gl_FragCoord.xy);
+        float y = viewDir.y;
 
-    fragc = vec4(skyColor, 1.0);
+        vec3 skyColor;
+        if (y > 0.0) {
+            float t = pow(y, 0.65);
+            skyColor = mix(horizonColor, zenithColor, t);
+        } else {
+            float t = pow(-y, 0.7);
+            skyColor = mix(horizonColor, groundColor, t);
+        }
+
+        fragc = vec4(skyColor, 1.0);
+    }
+    else {
+        fragc = texture(normal, fs_in.uv);
+    }
 
     float tNear, tFar;
         
