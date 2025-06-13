@@ -98,7 +98,7 @@ float computeLightTransmittance(vec3 p, vec3 lightDirection) {
 // ----------------------------------------------------------- //
 
 // Main ray marching function
-float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3 cloudColor, float depth) {
+float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3 cloudColor) {
     
     // Get the closest and farthest points in the imaginary cube
     float tNear, tFar;
@@ -134,11 +134,11 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         float sampledNoise = texture(noiseTexture, uv).r;
 
         
-        float margin = 0.1;
+        float margin = 0.01;
 
-        float fadeX = smoothstep(0.0, margin, uv.x) * smoothstep(1.0, 1.0 - margin, uv.x);
-        float fadeY = smoothstep(0.0, margin, uv.y) * smoothstep(1.0, 1.0 - margin, uv.y);
-        float fadeZ = smoothstep(0.0, margin, uv.z) * smoothstep(1.0, 1.0 - margin, uv.z);
+        float fadeX = smoothstep(0.0, margin, uv.x) * (1.0 - smoothstep(1.0 - margin, 1.0, uv.x));
+        float fadeY = smoothstep(0.0, margin, uv.y) * (1.0 - smoothstep(1.0 - margin, 1.0, uv.y));
+        float fadeZ = smoothstep(0.0, margin, uv.z) * (1.0 - smoothstep(1.0 - margin, 1.0, uv.z));
 
         float edgeFade = fadeX * fadeY * fadeZ;
 
@@ -234,7 +234,7 @@ void main() {
     }
     
     vec3 hitPosition, cloudColor;
-    float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor, depth);
+    float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor);
 
     vec3 background = fragc.rgb;
     
