@@ -55,7 +55,7 @@ void initialize() {
     glfwSetCursorPosCallback(window, cursor_position_callback);
     
     Shader shader = Shader::Create("/Users/dmitriwamback/Documents/Projects/volumetric_rendering/volumetric_rendering/src/shaders/main"),
-           rayMarchingShader = Shader::Create("/Users/dmitriwamback/Documents/Projects/volumetric_rendering/volumetric_rendering/src/shaders/ray_marching");
+           rayMarchingShader = Shader::Create("/Users/dmitriwamback/Documents/Projects/volumetric_rendering/volumetric_rendering/src/shaders/atmospheric_clouds");
     Cube cube = Cube::Create();
     RayMarchingQuad quad = RayMarchingQuad::Create();
     
@@ -70,12 +70,14 @@ void initialize() {
         movement.w = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? -0.05f : 0;
         movement.x = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ?  0.05f : 0;
         movement.y = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? -0.05f : 0;
+        
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) quad.GenerateNoiseTexture();
                 
         camera.Update(movement);
         std::cout << camera.position.x << " " << camera.position.y << " " << camera.position.z << '\n';
         
         renderer.Bind();
-        glClearColor(0.4, 0.7, 1.0, 0.0);
+        glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.Use();
         shader.SetVector3("cameraPosition", camera.position);

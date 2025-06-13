@@ -24,12 +24,17 @@ in prop {
 } fs_in;
 
 // ----- Cloud Box ----- //
-vec3 boxPosition = vec3(0.0, 0.0, -4.0);
-vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.5;
+vec3 boxPosition = vec3(0.0, 0.0, -10.0);
+vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.25;
 vec3 boxMin = boxPosition - halfSize;
 vec3 boxMax = boxPosition + halfSize;
 
 vec3 cloudAmbient = vec3(0.2, 0.3, 1.0);
+
+
+vec3 zenithColor = vec3(0.05, 0.15, 0.4);
+vec3 horizonColor = vec3(0.6, 0.7, 0.9);
+vec3 groundColor = vec3(0.4, 0.35, 0.3);
 
 
 // ----------------------------------------------------------- //
@@ -137,13 +142,13 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
 
         float edgeFade = fadeX * fadeY * fadeZ;
 
-        float radialFalloff = 1.0; // no spherical fade
+        float radialFalloff = 1.0;
 
         float density = clamp(pow(sampledNoise, 2.0) * 3.0 - 0.2, 0.0, 1.0);
-        density *= edgeFade;
+        density *= edgeFade * 2.5;
         
         if (density < 0.01) {
-            t += stepSize * 4.0;
+            t += stepSize * 2.0;
             continue;
         }
         
@@ -196,21 +201,37 @@ vec3 computeRayDirection(vec2 fragp) {
 void main() {
     vec3 rayDirection = computeRayDirection(gl_FragCoord.xy);
     
-    float depth = texture(distanceToCamera, gl_FragCoord.xy / screenSize).r;
+    vec2 uv = gl_FragCoord.xy;
+    float depth = texture(distanceToCamera, uv / screenSize).r;
+
+    vec3 viewDir = computeRayDirection(gl_FragCoord.xy);
+    float y = viewDir.y;
+
+    vec3 skyColor;
+    if (y > 0.0) {
+        float t = pow(y, 0.65);
+        skyColor = mix(horizonColor, zenithColor, t);
+    } else {
+        float t = pow(-y, 0.7);
+        skyColor = mix(horizonColor, groundColor, t);
+    }
+
+    fragc = vec4(skyColor, 1.0);
+
     float tNear, tFar;
         
     if (!intersectBox(cameraPosition, rayDirection, tNear, tFar)) {
-        fragc = texture(normal, fs_in.uv);
+        fragc += texture(normal, fs_in.uv);
         return;
     }
     
     vec3 hitPosition, cloudColor;
     float opacity = rayMarch(cameraPosition, rayDirection, hitPosition, cloudColor, depth);
 
-    vec3 background = texture(normal, fs_in.uv).rgb;
+    vec3 background = fragc.rgb;
     
     vec3 toneMappedCloud = cloudColor / (cloudColor + vec3(1.0));
-    toneMappedCloud = pow(toneMappedCloud, vec3(1.0 / 3.2));
+    toneMappedCloud = pow(toneMappedCloud, vec3(1.0 / 2.2));
 
-    fragc = (opacity > 0.0) ? vec4(mix(background, toneMappedCloud, opacity), 1.0) : texture(normal, fs_in.uv);
+    fragc = (opacity > 0.0) ? vec4(mix(background, toneMappedCloud, opacity), 1.0) : vec4(background, 1.0);
 }

@@ -14,6 +14,7 @@ public:
     
     static RayMarchingQuad Create();
     void Render(Shader shader, DeferredRenderer renderer);
+    void GenerateNoiseTexture();
 private:
     uint32_t vertexArrayObject, vertexBufferObject, noiseBoxTexture;
 };
@@ -31,48 +32,8 @@ RayMarchingQuad RayMarchingQuad::Create() {
         {{-1.0f, -1.0f,  0.0f}, { 0,  0,  1}, {0, 0}},
     };
     
-    int size = 128;
-    
-    std::vector<float> noiseValues(size * size * size);
-    
-    srand(static_cast<unsigned int>(std::time(nullptr)));
-    float seed = rand()%10000000;
-    
-    int sampleSize = 100;
-    float xsample[sampleSize], ysample[sampleSize], zsample[sampleSize];
-
-    for (int i = 0; i < sampleSize; i++) {
-        float x = (float)rand() / RAND_MAX,
-              y = (float)rand() / RAND_MAX,
-              z = (float)rand() / RAND_MAX;
-
-        xsample[i] = x;
-        ysample[i] = y;
-        zsample[i] = z;
-    }
-
-    float ***voronoiMap = voronoi(xsample, ysample, zsample, sampleSize, size);
-    float frequency = 0.00421f;
-    
-    for (int x = 0; x < size; x++) {
-        for (int y = 0; y < size; y++) {
-            for (int z = 0; z < size; z++) {
-                
-                float voronoiValue = 1 - voronoiMap[x][y][z];
-                
-                noiseValues[x + y * size + z * size * size] = (noiseLayer((x + seed) * frequency, (y + seed) * frequency, 1.5f, 0.7f, 20, (z + seed) * frequency) * 0.5f + 0.5f) * voronoiValue;
-            }
-        }
-    }
-    
     glGenTextures(1, &quad.noiseBoxTexture);
-    glBindTexture(GL_TEXTURE_3D, quad.noiseBoxTexture);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, size, size, size, 0, GL_RED, GL_FLOAT, noiseValues.data());
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    quad.GenerateNoiseTexture();
     
     glGenVertexArrays(1, &quad.vertexArrayObject);
     glBindVertexArray(quad.vertexArrayObject);
@@ -133,6 +94,51 @@ void RayMarchingQuad::Render(Shader shader, DeferredRenderer renderer) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glBindVertexArray(0);
+}
+
+void RayMarchingQuad::GenerateNoiseTexture() {
+    
+    int size = 128;
+    
+    std::vector<float> noiseValues(size * size * size);
+    
+    srand(static_cast<unsigned int>(std::time(nullptr)));
+    float seed = rand()%10000000;
+    
+    int sampleSize = 100;
+    float xsample[sampleSize], ysample[sampleSize], zsample[sampleSize];
+
+    for (int i = 0; i < sampleSize; i++) {
+        float x = (float)rand() / RAND_MAX,
+              y = (float)rand() / RAND_MAX,
+              z = (float)rand() / RAND_MAX;
+
+        xsample[i] = x;
+        ysample[i] = y;
+        zsample[i] = z;
+    }
+
+    float ***voronoiMap = voronoi(xsample, ysample, zsample, sampleSize, size);
+    float frequency = 0.00421f;
+    
+    for (int x = 0; x < size; x++) {
+        for (int y = 0; y < size; y++) {
+            for (int z = 0; z < size; z++) {
+                
+                float voronoiValue = 1 - voronoiMap[x][y][z];
+                
+                noiseValues[x + y * size + z * size * size] = (noiseLayer((x + seed) * frequency, (y + seed) * frequency, 1.5f, 0.7f, 20, (z + seed) * frequency) * 0.5f + 0.5f) * voronoiValue;
+            }
+        }
+    }
+    
+    glBindTexture(GL_TEXTURE_3D, noiseBoxTexture);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, size, size, size, 0, GL_RED, GL_FLOAT, noiseValues.data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }
 
 #endif /* ray_marching_h */
