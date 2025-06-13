@@ -29,7 +29,7 @@ vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.25;
 vec3 boxMin = boxPosition - halfSize;
 vec3 boxMax = boxPosition + halfSize;
 
-vec3 cloudAmbient = vec3(0.2, 0.3, 1.0);
+vec3 cloudAmbient = vec3(0.2, 0.3, 0.6);
 
 
 vec3 zenithColor = vec3(0.05, 0.15, 0.4);
