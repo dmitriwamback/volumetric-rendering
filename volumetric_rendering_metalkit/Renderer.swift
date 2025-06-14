@@ -6,6 +6,7 @@
 //
 
 import MetalKit
+import simd
 
 class Renderer: NSObject {
     
@@ -15,6 +16,12 @@ class Renderer: NSObject {
     var pipelineState: MTLRenderPipelineState!
     var triangle: Triangle!
     var uniformBuffer: MTLBuffer!
+    
+    var testProjectionMatrix: simd_float4x4!
+    var testLookAtMatrix: simd_float4x4!
+    
+    var uniforms: UniformBuffer!
+    var debugTime: Float!
     
     init (metal: MTKView) {
         
@@ -56,6 +63,15 @@ class Renderer: NSObject {
         pipelineDescriptor.colorAttachments[0].pixelFormat = metal.colorPixelFormat
         pipelineDescriptor.vertexDescriptor = vertexDescriptor
         
+        testProjectionMatrix = createProjectionMatrix(fov: 90 * 3.14159265358 / 180, aspect: 1200/800, far: 1000.0, near: 0.1)
+        testLookAtMatrix     = createLookAtMatrix(eye: SIMD3<Float>(2, 0, -1), target: SIMD3<Float>(0, 0, 0), up: SIMD3<Float>(0, 1, 0))
+        
+        uniforms = UniformBuffer(projection: testProjectionMatrix, lookAt: testLookAtMatrix, time: 0)
+        uniformBuffer = device.makeBuffer(bytes: &uniforms, length: MemoryLayout<UniformBuffer>.stride, options: [])
+        memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
+        
+        debugTime = 0
+        
         do {
             pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
         }
@@ -77,6 +93,13 @@ extension Renderer: MTKViewDelegate {
         
         renderEncoder.setRenderPipelineState(pipelineState)
         renderEncoder.setVertexBuffer(triangle.vertexBuffer, offset: 0, index: 0)
+        renderEncoder.setVertexBuffer(uniformBuffer, offset: 0, index: 1)
+        renderEncoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 1)
+        
+        debugTime += 0.1
+        
+        uniforms.lookAt = createLookAtMatrix(eye: SIMD3<Float>(2 * sin(debugTime), 2, 2 * cos(debugTime)), target: SIMD3<Float>(0, 0, 0), up: SIMD3<Float>(0, 1, 0))
+        memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
         
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
                 

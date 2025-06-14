@@ -17,10 +17,14 @@ struct Uniforms {
     float time;
 };
 
-vertex float4 vmain(const inVertex invertex [[ stage_in ]]) {
-    return invertex.position;
+vertex float4 vmain(const inVertex invertex [[ stage_in ]], constant Uniforms& uniforms [[buffer(1)]]) {
+    return uniforms.projection * uniforms.lookAt * float4(invertex.position.xyz, 1.0);
+}
+
+kernel void volumetricClouds(texture2d<float, access::write> output [[texture(0)]], uint2 gid [[thread_position_in_grid]]) {
+    
 }
 
 fragment half4 fmain() {
-    return half4(1.0);
+    return half4(1.0, 1.0, 0.8, 1.0);
 }

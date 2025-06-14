@@ -14,4 +14,5 @@ struct inVertex {
 struct UniformBuffer {
     var projection: simd_float4x4
     var lookAt: simd_float4x4
+    var time: Float
 }
