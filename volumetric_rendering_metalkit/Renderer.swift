@@ -12,6 +12,7 @@ class Renderer: NSObject {
     
     static var device: MTLDevice!
     static var commandQueue: MTLCommandQueue!
+    
     var mesh: MTKMesh!
     var pipelineState: MTLRenderPipelineState!
     var triangle: Triangle!
@@ -22,6 +23,11 @@ class Renderer: NSObject {
     
     var uniforms: UniformBuffer!
     var debugTime: Float!
+    static var camera: Camera!
+    static var movement: SIMD4<Float>!
+    
+    static var width: CGFloat!
+    static var height: CGFloat!
     
     init (metal: MTKView) {
         
@@ -31,7 +37,7 @@ class Renderer: NSObject {
         metal.device = device
         Renderer.device = device
         Renderer.commandQueue = device.makeCommandQueue()
-        
+                
         super.init()
         
         metal.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
@@ -63,10 +69,9 @@ class Renderer: NSObject {
         pipelineDescriptor.colorAttachments[0].pixelFormat = metal.colorPixelFormat
         pipelineDescriptor.vertexDescriptor = vertexDescriptor
         
-        testProjectionMatrix = createProjectionMatrix(fov: 90 * 3.14159265358 / 180, aspect: 1200/800, far: 1000.0, near: 0.1)
-        testLookAtMatrix     = createLookAtMatrix(eye: SIMD3<Float>(2, 0, -1), target: SIMD3<Float>(0, 0, 0), up: SIMD3<Float>(0, 1, 0))
+        Renderer.camera = Camera()
         
-        uniforms = UniformBuffer(projection: testProjectionMatrix, lookAt: testLookAtMatrix, time: 0)
+        uniforms = UniformBuffer(projection: Renderer.camera.projectionMatrix, lookAt: Renderer.camera.lookAtMatrix, time: 0)
         uniformBuffer = device.makeBuffer(bytes: &uniforms, length: MemoryLayout<UniformBuffer>.stride, options: [])
         memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
         
@@ -78,6 +83,9 @@ class Renderer: NSObject {
         catch let error {
             fatalError("\(error.localizedDescription)")
         }
+        
+        Renderer.width = metal.frame.width
+        Renderer.height = metal.frame.width
     }
 }
 
@@ -86,6 +94,9 @@ extension Renderer: MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     func draw(in view: MTKView) {
+        
+        Renderer.width = view.drawableSize.width
+        Renderer.height = view.drawableSize.height
         
         guard let descriptor = view.currentRenderPassDescriptor,
               let commandBuffer = Renderer.commandQueue.makeCommandBuffer(),
@@ -98,7 +109,10 @@ extension Renderer: MTKViewDelegate {
         
         debugTime += 0.1
         
-        uniforms.lookAt = createLookAtMatrix(eye: SIMD3<Float>(2 * sin(debugTime), 2, 2 * cos(debugTime)), target: SIMD3<Float>(0, 0, 0), up: SIMD3<Float>(0, 1, 0))
+        Renderer.camera.update()
+        
+        uniforms.lookAt = Renderer.camera.lookAtMatrix
+        uniforms.projection = Renderer.camera.projectionMatrix
         memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
         
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
