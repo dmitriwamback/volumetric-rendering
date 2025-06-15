@@ -8,7 +8,15 @@
 using namespace metal;
 
 struct inVertex {
-    float4 position [[attribute(0)]];
+    float3 position [[attribute(0)]];
+    float3 normal [[attribute(1)]];
+    float2 uv [[attribute(2)]];
+};
+
+struct outVertex {
+    float4 position [[position]];
+    float3 normal;
+    float2 uv;
 };
 
 struct Uniforms {
@@ -17,14 +25,28 @@ struct Uniforms {
     float time;
 };
 
-vertex float4 vmain(const inVertex invertex [[ stage_in ]], constant Uniforms& uniforms [[buffer(1)]]) {
-    return uniforms.projection * uniforms.lookAt * float4(invertex.position.xyz, 1.0);
+vertex outVertex vmain(uint vertexID [[vertex_id]], constant inVertex *vertexArray [[buffer(0)]], constant Uniforms& uniforms [[buffer(1)]]) {
+    
+    outVertex out;
+
+    out.position = uniforms.projection * uniforms.lookAt * float4(vertexArray[vertexID].position.xyz, 1.0);
+    out.normal = vertexArray[vertexID].normal.xyz;
+    out.uv = vertexArray[vertexID].uv;
+    
+    return out;
 }
 
 kernel void volumetricClouds(texture2d<float, access::write> output [[texture(0)]], uint2 gid [[thread_position_in_grid]]) {
+    uint2 size = uint2(output.get_width(), output.get_height());
+        
+    if (gid.x >= size.x || gid.y >= size.y) {
+        return;
+    }
     
+    float4 redColor = float4(1.0, 0.0, 0.0, 1.0);
+    output.write(redColor, gid);
 }
 
-fragment half4 fmain() {
-    return half4(1.0, 1.0, 0.8, 1.0);
+fragment float4 fmain(outVertex in [[stage_in]], texture2d<float> inTexture [[texture(0)]], sampler inSampler [[sampler(0)]]) {
+    return inTexture.sample(inSampler, in.uv);
 }

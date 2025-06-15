@@ -78,8 +78,8 @@ class Camera {
             let deltaX = Float(mousePosition.x) - lastMousePositionX
             let deltaY = Float(mousePosition.y) - lastMousePositionY
             
-            pitch += deltaY * 0.0075
-            yaw += deltaX * 0.0075
+            pitch += deltaY * 0.0055
+            yaw += deltaX * 0.0055
             
             if (pitch >  1.55) { pitch =  1.55 }
             if (pitch < -1.55) { pitch = -1.55 }

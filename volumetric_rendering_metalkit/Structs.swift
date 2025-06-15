@@ -8,7 +8,9 @@
 import simd
 
 struct inVertex {
-    var position: SIMD4<Float>
+    var position: SIMD3<Float>
+    var normal: SIMD3<Float>
+    var uv: SIMD2<Float>
 }
 
 struct UniformBuffer {
