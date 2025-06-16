@@ -6,6 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		22C4CBA52DF85F5F0094F741 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBA42DF85F5F0094F741 /* Cocoa.framework */; };
+		22C4CBA72DF85F640094F741 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBA62DF85F640094F741 /* IOKit.framework */; };
+		22C4CBA92DF85F6B0094F741 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBA82DF85F6B0094F741 /* OpenGL.framework */; };
+		22C4CBAB2DF85F880094F741 /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBAA2DF85F880094F741 /* libglfw3.a */; };
+		22C4CBB02DF85F930094F741 /* libGLEW.2.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBAC2DF85F930094F741 /* libGLEW.2.2.dylib */; };
+		22C4CBB12DF85F930094F741 /* libGLEW.2.2.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBAD2DF85F930094F741 /* libGLEW.2.2.0.dylib */; };
+		22C4CBB22DF85F930094F741 /* libGLEW.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBAE2DF85F930094F741 /* libGLEW.dylib */; };
+		22C4CBB32DF85F930094F741 /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C4CBAF2DF85F930094F741 /* libGLEW.a */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		22C4CB972DF85EEF0094F741 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -20,6 +31,14 @@
 
 /* Begin PBXFileReference section */
 		22C4CB992DF85EEF0094F741 /* volumetric_rendering */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = volumetric_rendering; sourceTree = BUILT_PRODUCTS_DIR; };
+		22C4CBA42DF85F5F0094F741 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		22C4CBA62DF85F640094F741 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		22C4CBA82DF85F6B0094F741 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		22C4CBAA2DF85F880094F741 /* libglfw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglfw3.a; path = ../DoA2/vendor/GLFW/lib/libglfw3.a; sourceTree = "<group>"; };
+		22C4CBAC2DF85F930094F741 /* libGLEW.2.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.2.dylib; path = ../DoA2/vendor/glew/lib/libGLEW.2.2.dylib; sourceTree = "<group>"; };
+		22C4CBAD2DF85F930094F741 /* libGLEW.2.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.2.0.dylib; path = ../DoA2/vendor/glew/lib/libGLEW.2.2.0.dylib; sourceTree = "<group>"; };
+		22C4CBAE2DF85F930094F741 /* libGLEW.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.dylib; path = ../DoA2/vendor/glew/lib/libGLEW.dylib; sourceTree = "<group>"; };
+		22C4CBAF2DF85F930094F741 /* libGLEW.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLEW.a; path = ../DoA2/vendor/glew/lib/libGLEW.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +54,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22C4CBA92DF85F6B0094F741 /* OpenGL.framework in Frameworks */,
+				22C4CBA72DF85F640094F741 /* IOKit.framework in Frameworks */,
+				22C4CBA52DF85F5F0094F741 /* Cocoa.framework in Frameworks */,
+				22C4CBAB2DF85F880094F741 /* libglfw3.a in Frameworks */,
+				22C4CBB02DF85F930094F741 /* libGLEW.2.2.dylib in Frameworks */,
+				22C4CBB12DF85F930094F741 /* libGLEW.2.2.0.dylib in Frameworks */,
+				22C4CBB22DF85F930094F741 /* libGLEW.dylib in Frameworks */,
+				22C4CBB32DF85F930094F741 /* libGLEW.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				22C4CB9B2DF85EEF0094F741 /* volumetric_rendering */,
+				22C4CBA32DF85F5F0094F741 /* Frameworks */,
 				22C4CB9A2DF85EEF0094F741 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -55,6 +83,21 @@
 				22C4CB992DF85EEF0094F741 /* volumetric_rendering */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		22C4CBA32DF85F5F0094F741 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				22C4CBAF2DF85F930094F741 /* libGLEW.a */,
+				22C4CBAE2DF85F930094F741 /* libGLEW.dylib */,
+				22C4CBAC2DF85F930094F741 /* libGLEW.2.2.dylib */,
+				22C4CBAD2DF85F930094F741 /* libGLEW.2.2.0.dylib */,
+				22C4CBAA2DF85F880094F741 /* libglfw3.a */,
+				22C4CBA82DF85F6B0094F741 /* OpenGL.framework */,
+				22C4CBA62DF85F640094F741 /* IOKit.framework */,
+				22C4CBA42DF85F5F0094F741 /* Cocoa.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -245,6 +288,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = (
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/glew/include,
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/GLFW,
+					/Users/dmitriwamback/Documents/Projects/DoA2/glm,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"/Users/dmitriwamback/Documents/Projects/DoA2/vendor/glew/lib\"",
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/GLFW/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -253,6 +305,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = (
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/glew/include,
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/GLFW,
+					/Users/dmitriwamback/Documents/Projects/DoA2/glm,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"/Users/dmitriwamback/Documents/Projects/DoA2/vendor/glew/lib\"",
+					/Users/dmitriwamback/Documents/Projects/DoA2/vendor/GLFW/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

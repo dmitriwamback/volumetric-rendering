@@ -25,7 +25,7 @@ in prop {
 
 // ----- Cloud Box ----- //
 vec3 boxPosition = vec3(0.0, 0.0, -10.0);
-vec3 halfSize = vec3(2.0, 2.0, 2.0) * 1.25;
+vec3 halfSize = vec3(2.0, 2.0, 2.0) * 2.25;
 vec3 boxMin = boxPosition - halfSize;
 vec3 boxMax = boxPosition + halfSize;
 
@@ -134,7 +134,7 @@ float rayMarch(vec3 rayOrigin, vec3 rayDirection, out vec3 hitPosition, out vec3
         float sampledNoise = texture(noiseTexture, uv).r;
 
         
-        float margin = 0.01;
+        float margin = 0.1;
 
         float fadeX = smoothstep(0.0, margin, uv.x) * (1.0 - smoothstep(1.0 - margin, 1.0, uv.x));
         float fadeY = smoothstep(0.0, margin, uv.y) * (1.0 - smoothstep(1.0 - margin, 1.0, uv.y));
