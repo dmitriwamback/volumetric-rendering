@@ -14,8 +14,6 @@ class ScreenView: MTKView {
     
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        
-        // This tells the window to report mouse movements
         window?.acceptsMouseMovedEvents = true
     }
     

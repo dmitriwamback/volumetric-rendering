@@ -1,5 +1,5 @@
 //
-//  Triangle.swift
+//  Cube.swift
 //  volumetric_rendering_metalkit
 //
 //  Created by Dmitri Wamback on 2025-06-14.
@@ -9,7 +9,7 @@ import simd
 import Metal
 import MetalKit
 
-class Triangle {
+class Cube {
     
     var vertices: [inVertex]!
     var vertexBuffer: MTLBuffer!
