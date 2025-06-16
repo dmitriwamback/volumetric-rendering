@@ -124,7 +124,12 @@ class Renderer: NSObject {
         
         Renderer.camera = Camera()
         
-        uniforms = UniformBuffer(projection: Renderer.camera.projectionMatrix, lookAt: Renderer.camera.lookAtMatrix, time: 0)
+        uniforms = UniformBuffer(projection: Renderer.camera.projectionMatrix,
+                                 lookAt: Renderer.camera.lookAtMatrix,
+                                 inverseProjection: Renderer.camera.projectionMatrix.inverse,
+                                 inverseLookAt: Renderer.camera.lookAtMatrix.inverse,
+                                 cameraPosition: Renderer.camera.position,
+                                 time: 0)
         uniformBuffer = device.makeBuffer(bytes: &uniforms, length: MemoryLayout<UniformBuffer>.stride, options: [])
         memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
         
@@ -226,6 +231,7 @@ extension Renderer: MTKViewDelegate {
             computeEncoder.setTexture(gAlbedo, index: 1)
             computeEncoder.setTexture(gNormal, index: 2)
             computeEncoder.setTexture(gPosition, index: 3)
+            computeEncoder.setBuffer(uniformBuffer, offset: 0, index: 0)
             
             let threadsPerThreadgroup = MTLSizeMake(8, 8, 1)
             let threadgroups = MTLSizeMake(
@@ -264,8 +270,11 @@ extension Renderer: MTKViewDelegate {
         
         Renderer.camera.update()
         
-        uniforms.lookAt = Renderer.camera.lookAtMatrix
-        uniforms.projection = Renderer.camera.projectionMatrix
+        uniforms.lookAt             = Renderer.camera.lookAtMatrix
+        uniforms.projection         = Renderer.camera.projectionMatrix
+        uniforms.inverseLookAt      = Renderer.camera.lookAtMatrix.inverse
+        uniforms.inverseProjection  = Renderer.camera.projectionMatrix.inverse
+        uniforms.cameraPosition     = Renderer.camera.position
         memcpy(uniformBuffer.contents(), &uniforms, MemoryLayout<UniformBuffer>.stride)
         
         // -------------------------------------------------------------------------------- //
