@@ -161,9 +161,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
     
     int maxSteps = int(min(64.0, (tFar - tNear) / stepSize));
     
-    float2 jitterSeed = float2(gid) + 0.5;
-    float offset = fract(sin(dot(jitterSeed, float2(12.9898, 78.233))) * 43758.5453);
-    float t = max(tNear, 0.0) + offset * stepSize;
+    float t = max(tNear, 0.0);
     
     float opacity = 0.0;
     half3 colorAccum = half3(0.0);
@@ -177,7 +175,6 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
             continue;
         }
 
-        // Single smooth fade
         constexpr half margin = 0.1h;
         half3 huv = half3(uv);
         half edgeFade =
