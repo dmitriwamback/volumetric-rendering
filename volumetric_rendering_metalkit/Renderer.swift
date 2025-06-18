@@ -231,12 +231,15 @@ extension Renderer: MTKViewDelegate {
             computeEncoder.setTexture(gAlbedo, index: 1)
             computeEncoder.setTexture(gNormal, index: 2)
             computeEncoder.setTexture(gPosition, index: 3)
+            computeEncoder.setTexture(rayMarchingQuad.cloudNoiseTexture, index: 4)
             computeEncoder.setBuffer(uniformBuffer, offset: 0, index: 0)
             
-            let threadsPerThreadgroup = MTLSizeMake(8, 8, 1)
+            let threads = 1
+            
+            let threadsPerThreadgroup = MTLSizeMake(threads, threads, 1)
             let threadgroups = MTLSizeMake(
-                (Int(Renderer.width) + 7) / 8,
-                (Int(Renderer.height) + 7) / 8,
+                (Int(Renderer.width) + threads-1) / threads,
+                (Int(Renderer.height) + threads-1) / threads,
                 1)
             
             computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
