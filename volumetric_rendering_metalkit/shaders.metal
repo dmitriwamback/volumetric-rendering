@@ -145,7 +145,7 @@ float computeLightTransmittance(float3 p, float3 lightDirection, texture3d<float
     return exp(-attenuation * 10.1);
 }
 
-float rayMarch(float3 rayOrigin, float3 rayDirection, thread float3* hitPosition, thread float3* cloudColor, texture3d<float> noiseTexture, sampler _sampler) {
+float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseTexture, sampler _sampler, uint2 gid, thread float3* hitPosition, thread float3* cloudColor) {
     
     float tNear, tFar;
     if (!intersectBox(rayOrigin, rayDirection, &tNear, &tFar)) {
@@ -153,67 +153,70 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, thread float3* hitPosition
         *cloudColor = float3(0.0);
         return -1.0;
     }
-    
-    // Constants
+
     constexpr float stepSize = 0.05;
     constexpr float k = 0.5;
+    constexpr float minDensityThreshold = 0.05;
     float3 lightDirection = normalize(float3(1.0, 1.0, 0.5));
     
-    int maxSteps = int(min(128.0, (tFar - tNear) / stepSize));
-    float t = max(tNear, 0.0) + 0.0001;
-    float opacity = 0.0;
-    half3 color = half3(0.0);
+    int maxSteps = int(min(64.0, (tFar - tNear) / stepSize));
     
-    for (int i = 0; i < maxSteps && t < tFar; ++i) {
-        
-        float3 rayPosition = rayOrigin + rayDirection * t;
-        
-        half3 uv = half3((rayPosition - boxPosition) / halfSize) * 0.5h + 0.5h;
-        
-        if (any(uv < half3(0.0)) || any(uv > half3(1.0))) {
+    float2 jitterSeed = float2(gid) + 0.5;
+    float offset = fract(sin(dot(jitterSeed, float2(12.9898, 78.233))) * 43758.5453);
+    float t = max(tNear, 0.0) + offset * stepSize;
+    
+    float opacity = 0.0;
+    half3 colorAccum = half3(0.0);
+
+    for (int i = 0; i < maxSteps && t < tFar; i++) {
+        float3 rayPos = rayOrigin + rayDirection * t;
+        float3 uv = (rayPos - boxPosition) / halfSize * 0.5 + 0.5;
+
+        if (any(uv < float3(-0.01)) || any(uv > float3(1.01))) {
             t += stepSize;
             continue;
         }
-        
-        constexpr half margin = 0.1;
-        half fadeX = smoothstep(0.0h, margin, uv.x) * (1.0h - smoothstep(1.0h - margin, 1.0h, uv.x));
-        half fadeY = smoothstep(0.0h, margin, uv.y) * (1.0h - smoothstep(1.0h - margin, 1.0h, uv.y));
-        half fadeZ = smoothstep(0.0h, margin, uv.z) * (1.0h - smoothstep(1.0h - margin, 1.0h, uv.z));
-        half edgeFade = fadeX * fadeY * fadeZ;
-        
-        half sampledNoise = noiseTexture.sample(_sampler, float3(uv)).r;
-        
-        half density = clamp(pow(sampledNoise, 2.0h) * 3.0 - 0.2, 0.0, 1.0);
-        density *= edgeFade * 2.5;
-        
-        if (density < 0.1) {
-            t += stepSize * 2.0;
+
+        // Single smooth fade
+        constexpr half margin = 0.1h;
+        half3 huv = half3(uv);
+        half edgeFade =
+            smoothstep(0.0h, margin, huv.x) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.x)) *
+            smoothstep(0.0h, margin, huv.y) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.y)) *
+            smoothstep(0.0h, margin, huv.z) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.z));
+
+        float noise = noiseTexture.sample(_sampler, uv).r;
+        half density = clamp(pow(noise, 1.5) - 0.15, 0.0, 1.0) * 1.4;
+        density *= edgeFade * 2.5h;
+
+        if (density <= minDensityThreshold) {
+            t += stepSize * 1.5;
             continue;
         }
-        
-        half transmittance = computeLightTransmittance(rayPosition, lightDirection, noiseTexture, _sampler);
+
+        // Lighting
+        half transmittance = computeLightTransmittance(rayPos, lightDirection, noiseTexture, _sampler);
         half cosTheta = dot(rayDirection, lightDirection);
         half phase = phaseSchlick(cosTheta, k);
-        
+
         half3 lightColor = half3(1.0h);
         half3 ambient = cloudAmbient * density;
         half3 scatter = lightColor * transmittance * phase * density + ambient;
-        
-        color += (1.0 - opacity) * scatter * stepSize;
+
+        colorAccum += (1.0 - opacity) * scatter * stepSize;
         opacity += (1.0 - opacity) * density * stepSize;
-        
-        if (opacity >= 0.99) {
-            break;
-        }
-        
+
+        if (opacity >= 0.97) break;
+
         t += stepSize;
     }
-    
+
     if (opacity > 0.0) {
         *hitPosition = rayOrigin + rayDirection * t;
-        *cloudColor = float3(color) * 1.75;
+        *cloudColor = float3(colorAccum) * 1.75;
         return opacity;
-    } else {
+    }
+    else {
         *hitPosition = float3(0.0);
         *cloudColor = float3(0.0);
         return -1.0;
@@ -252,6 +255,7 @@ kernel void volumetricClouds(constant Uniforms& uniforms [[buffer(0)]],
     uv.y = 1 - uv.y;
     
     float3 ray = computeRayDirection(uv, uniforms.inverseProjection, uniforms.inverseLookAt);
+    ray = normalize(floor(ray * 2048.0) / 2048.0);
     float y = ray.y;
     
     half3 skyColor;
@@ -273,7 +277,7 @@ kernel void volumetricClouds(constant Uniforms& uniforms [[buffer(0)]],
     }
     
     float3 hitPosition, cloudColor;
-    float opacity = rayMarch(uniforms.cameraPosition, ray, &hitPosition, &cloudColor, noiseTexture, inSampler);
+    float opacity = rayMarch(uniforms.cameraPosition, ray,  noiseTexture, inSampler, gid, &hitPosition, &cloudColor);
     
     half3 background = _albedo.rgb;
         

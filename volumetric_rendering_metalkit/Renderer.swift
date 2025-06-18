@@ -234,7 +234,7 @@ extension Renderer: MTKViewDelegate {
             computeEncoder.setTexture(rayMarchingQuad.cloudNoiseTexture, index: 4)
             computeEncoder.setBuffer(uniformBuffer, offset: 0, index: 0)
             
-            let threads = 1
+            let threads = 32
             
             let threadsPerThreadgroup = MTLSizeMake(threads, threads, 1)
             let threadgroups = MTLSizeMake(
