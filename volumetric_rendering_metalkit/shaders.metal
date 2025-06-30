@@ -90,7 +90,7 @@ constant float3 halfSize = float3(2.0, 2.0, 2.0);
 constant float3 boxMin = boxPosition - halfSize;
 constant float3 boxMax = boxPosition + halfSize;
 
-constant half3 cloudAmbient = half3(0.2h, 0.3h, 0.6h);
+constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.5h);
 
 constant half3 zenithColor  = half3(0.05h, 0.15h, 0.4h);
 constant half3 horizonColor = half3(0.6h, 0.7h, 0.9h);
@@ -252,7 +252,6 @@ kernel void volumetricClouds(constant Uniforms& uniforms [[buffer(0)]],
     uv.y = 1 - uv.y;
     
     float3 ray = computeRayDirection(uv, uniforms.inverseProjection, uniforms.inverseLookAt);
-    ray = normalize(floor(ray * 2048.0) / 2048.0);
     float y = ray.y;
     
     half3 skyColor;
