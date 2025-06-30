@@ -88,8 +88,8 @@ class Renderer: NSObject {
         
         let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm,
-            width: Int(metal.drawableSize.width),
-            height: Int(metal.drawableSize.height),
+            width: Int(metal.drawableSize.width/4),
+            height: Int(metal.drawableSize.height/4),
             mipmapped: false
         )
         textureDescriptor.usage = [.shaderWrite, .shaderRead]
@@ -238,8 +238,8 @@ extension Renderer: MTKViewDelegate {
             
             let threadsPerThreadgroup = MTLSizeMake(threads, threads, 1)
             let threadgroups = MTLSizeMake(
-                (Int(Renderer.width) + threads-1) / threads,
-                (Int(Renderer.height) + threads-1) / threads,
+                (Int(Renderer.width/4) + threads-1) / threads,
+                (Int(Renderer.height/4) + threads-1) / threads,
                 1)
             
             computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)

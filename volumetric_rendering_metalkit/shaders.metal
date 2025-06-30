@@ -169,12 +169,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
     for (int i = 0; i < maxSteps && t < tFar; i++) {
         float3 rayPos = rayOrigin + rayDirection * t;
         float3 uv = (rayPos - boxPosition) / halfSize * 0.5 + 0.5;
-
-        if (any(uv < float3(-0.01)) || any(uv > float3(1.01))) {
-            t += stepSize;
-            continue;
-        }
-
+        
         constexpr half margin = 0.1h;
         half3 huv = half3(uv);
         half edgeFade =
