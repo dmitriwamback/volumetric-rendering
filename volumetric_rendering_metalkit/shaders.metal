@@ -86,15 +86,19 @@ fragment GBufferOutFragment fgbuffer(GBufferOut in [[stage_in]]) {
 
 
 constant float3 boxPosition = float3(0.0, 0.0, -10.0);
-constant float3 halfSize = float3(2.0, 2.0, 2.0);
+constant float3 halfSize = float3(12.0, 12.0, 12.0);
 constant float3 boxMin = boxPosition - halfSize;
 constant float3 boxMax = boxPosition + halfSize;
 
-constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.6h);
+constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.9h);
 
 constant half3 zenithColor  = half3(0.05h, 0.15h, 0.4h);
 constant half3 horizonColor = half3(0.6h, 0.7h, 0.9h);
 constant half3 groundColor  = half3(0.4h, 0.35h, 0.3h);
+
+float sampleNoise(texture3d<float> noiseTexture, sampler _sampler, float3 uv) {
+    return noiseTexture.sample(_sampler, uv).r;
+}
 
 
 bool intersectBox(float3 RO, float3 RD, thread float* tNear, thread float* tFar) {
@@ -136,7 +140,7 @@ float computeLightTransmittance(float3 p, float3 lightDirection, texture3d<float
         if (any(uv < float3(0.0)) || any(uv > float3(1.0)))
             break;
 
-        float sampledNoise = half(noiseTexture.sample(_sampler, uv).r);
+        float sampledNoise = sampleNoise(noiseTexture, _sampler, uv);
         float localDensity = clamp(pow(sampledNoise, 2.4) * 1.2 - 0.2, 0.0, 1.0);
         attenuation += localDensity * stepSize;
         t += stepSize;
@@ -154,7 +158,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
         return -1.0;
     }
 
-    constexpr float stepSize = 0.03;
+    constexpr float stepSize = 0.24;
     constexpr float k = 0.5;
     constexpr float minDensityThreshold = 0.1;
     float3 lightDirection = normalize(float3(1.0, 1.0, 0.5));
@@ -177,7 +181,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
             smoothstep(0.0h, margin, huv.y) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.y)) *
             smoothstep(0.0h, margin, huv.z) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.z));
 
-        float noise = noiseTexture.sample(_sampler, uv).r;
+        float noise = sampleNoise(noiseTexture, _sampler, uv);
         half density = clamp(pow(noise, 1.5) - 0.15, 0.0, 1.0) * 1.4;
         density *= edgeFade * 2.5h;
 
