@@ -90,7 +90,7 @@ constant float3 halfSize = float3(2.0, 2.0, 2.0);
 constant float3 boxMin = boxPosition - halfSize;
 constant float3 boxMax = boxPosition + halfSize;
 
-constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.5h);
+constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.6h);
 
 constant half3 zenithColor  = half3(0.05h, 0.15h, 0.4h);
 constant half3 horizonColor = half3(0.6h, 0.7h, 0.9h);
@@ -154,12 +154,12 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
         return -1.0;
     }
 
-    constexpr float stepSize = 0.05;
+    constexpr float stepSize = 0.03;
     constexpr float k = 0.5;
-    constexpr float minDensityThreshold = 0.05;
+    constexpr float minDensityThreshold = 0.1;
     float3 lightDirection = normalize(float3(1.0, 1.0, 0.5));
     
-    int maxSteps = int(min(64.0, (tFar - tNear) / stepSize));
+    int maxSteps = int(min(128.0, (tFar - tNear) / stepSize));
     
     float t = max(tNear, 0.0);
     
@@ -278,4 +278,40 @@ kernel void volumetricClouds(constant Uniforms& uniforms [[buffer(0)]],
     _albedo = (opacity > 0.0) ? half4(mix(background, toneMappedCloud, opacity), 1.0) : half4(background, 1.0);
     
     output.write(float4(_albedo), gid);
+}
+
+kernel void downsampleBoxFilter(texture2d<float, access::sample> input [[texture(0)]],
+                                texture2d<float, access::write> output [[texture(1)]],
+                                sampler inSampler [[sampler(0)]],
+                                uint2 gid [[thread_position_in_grid]]) {
+    
+    uint2 outSize = uint2(output.get_width(), output.get_height());
+    if (gid.x >= outSize.x || gid.y >= outSize.y) return;
+    
+    float2 texelSize = 1.0 / float2(input.get_width(), input.get_height());
+
+    float2 uv = (float2(gid) + 0.5) / float2(outSize);
+
+    float2 offset = texelSize * 0.5;
+    float4 result = float4(0.0);
+    result += input.sample(inSampler, uv + float2(-offset.x, -offset.y));
+    result += input.sample(inSampler, uv + float2( offset.x, -offset.y));
+    result += input.sample(inSampler, uv + float2(-offset.x,  offset.y));
+    result += input.sample(inSampler, uv + float2( offset.x,  offset.y));
+
+    output.write(result * 0.25, gid);
+}
+
+kernel void upsampleLinear(texture2d<float, access::sample> input [[texture(0)]],
+                           texture2d<float, access::write> output [[texture(1)]],
+                           sampler inSampler [[sampler(0)]],
+                           uint2 gid [[thread_position_in_grid]]) {
+    
+    uint2 outSize = uint2(output.get_width(), output.get_height());
+    if (gid.x >= outSize.x || gid.y >= outSize.y) return;
+
+    float2 uv = (float2(gid) + 0.5) / float2(outSize);
+    float4 color = input.sample(inSampler, uv);
+
+    output.write(color, gid);
 }

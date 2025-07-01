@@ -203,7 +203,24 @@ class Renderer: NSObject {
 
 extension Renderer: MTKViewDelegate {
     
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        
+        createGBufferTextures()
+        
+        // -------------------------------------------------------------------------------- //
+        
+        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: .rgba8Unorm,
+            width: Int(view.drawableSize.width/8),
+            height: Int(view.drawableSize.height/8),
+            mipmapped: false
+        )
+        textureDescriptor.usage = [.shaderWrite, .shaderRead]
+        
+        // -------------------------------------------------------------------------------- //
+        
+        outputTexture = Renderer.device.makeTexture(descriptor: textureDescriptor)
+    }
     
     func draw(in view: MTKView) {
         
@@ -216,7 +233,7 @@ extension Renderer: MTKViewDelegate {
         samplerDescriptor.tAddressMode = .clampToEdge
 
         let samplerState = Renderer.device.makeSamplerState(descriptor: samplerDescriptor)
-        
+                
         // -------------------------------------------------------------------------------- //
         
         Renderer.width = view.drawableSize.width
@@ -225,22 +242,25 @@ extension Renderer: MTKViewDelegate {
         guard let commandBuffer = Renderer.commandQueue.makeCommandBuffer() else { return }
             
         if let computeEncoder = commandBuffer.makeComputeCommandEncoder() {
-            computeEncoder.setSamplerState(samplerState, index: 0)
-            computeEncoder.setComputePipelineState(computePipelineState)
-            computeEncoder.setTexture(outputTexture, index: 0)
-            computeEncoder.setTexture(gAlbedo, index: 1)
-            computeEncoder.setTexture(gNormal, index: 2)
-            computeEncoder.setTexture(gPosition, index: 3)
-            computeEncoder.setTexture(rayMarchingQuad.cloudNoiseTexture, index: 4)
-            computeEncoder.setBuffer(uniformBuffer, offset: 0, index: 0)
             
-            let threads = 32
+            computeEncoder.setSamplerState(samplerState, index: 0)
+            
+            let threads = 16
             
             let threadsPerThreadgroup = MTLSizeMake(threads, threads, 1)
             let threadgroups = MTLSizeMake(
                 (Int(Renderer.width/4) + threads-1) / threads,
                 (Int(Renderer.height/4) + threads-1) / threads,
                 1)
+            
+            computeEncoder.setComputePipelineState(computePipelineState)
+            
+            computeEncoder.setTexture(outputTexture, index: 0)
+            computeEncoder.setTexture(gAlbedo, index: 1)
+            computeEncoder.setTexture(gNormal, index: 2)
+            computeEncoder.setTexture(gPosition, index: 3)
+            computeEncoder.setTexture(rayMarchingQuad.cloudNoiseTexture, index: 4)
+            computeEncoder.setBuffer(uniformBuffer, offset: 0, index: 0)
             
             computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
             computeEncoder.endEncoding()

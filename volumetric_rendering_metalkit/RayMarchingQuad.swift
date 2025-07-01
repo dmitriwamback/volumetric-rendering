@@ -38,7 +38,7 @@ class RayMarchingQuad {
         textureDescriptor.usage = [.shaderRead]
         
         var noiseData = [Float](repeating: 0.0, count: size * size * size * 4)
-        let frequency: Float = 0.00421
+        let frequency: Float = 0.00321
         
         let seed = Float.random(in: 0...20000000)
         
