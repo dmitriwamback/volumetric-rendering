@@ -85,12 +85,13 @@ fragment GBufferOutFragment fgbuffer(GBufferOut in [[stage_in]]) {
 
 
 
+constant float boxSize = 5;
 constant float3 boxPosition = float3(0.0, 0.0, -10.0);
-constant float3 halfSize = float3(12.0, 12.0, 12.0);
+constant float3 halfSize = float3(2.0, 2.0, 2.0) * boxSize;
 constant float3 boxMin = boxPosition - halfSize;
 constant float3 boxMax = boxPosition + halfSize;
 
-constant half3 cloudAmbient = half3(0.4h, 0.4h, 0.9h);
+constant half3 cloudAmbient = half3(0.3h, 0.3h, 0.3h);
 
 constant half3 zenithColor  = half3(0.05h, 0.15h, 0.4h);
 constant half3 horizonColor = half3(0.6h, 0.7h, 0.9h);
@@ -158,7 +159,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
         return -1.0;
     }
 
-    constexpr float stepSize = 0.24;
+    constexpr float stepSize = 0.03 * boxSize;
     constexpr float k = 0.5;
     constexpr float minDensityThreshold = 0.1;
     float3 lightDirection = normalize(float3(1.0, 1.0, 0.5));
@@ -182,8 +183,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
             smoothstep(0.0h, margin, huv.z) * (1.0h - smoothstep(1.0h - margin, 1.0h, huv.z));
 
         float noise = sampleNoise(noiseTexture, _sampler, uv);
-        half density = clamp(pow(noise, 1.5) - 0.15, 0.0, 1.0) * 1.4;
-        density *= edgeFade * 2.5h;
+        half density = clamp(pow(noise, 1.5) - 0.15, 0.0, 1.0) * edgeFade * 1.2;
 
         if (density <= minDensityThreshold) {
             t += stepSize * 1.5;
@@ -209,7 +209,7 @@ float rayMarch(float3 rayOrigin, float3 rayDirection, texture3d<float> noiseText
 
     if (opacity > 0.0) {
         *hitPosition = rayOrigin + rayDirection * t;
-        *cloudColor = float3(colorAccum) * 1.75;
+        *cloudColor = float3(colorAccum) * 1.15;
         return opacity;
     }
     else {

@@ -40,7 +40,7 @@ class RayMarchingQuad {
         var noiseData = [Float](repeating: 0.0, count: size * size * size * 4)
         let frequency: Float = 0.00321
         
-        let seed = Float.random(in: 0...20000000)
+        let seed = Float.random(in: 0...20000)
         
         cloudNoiseTexture = Renderer.device.makeTexture(descriptor: textureDescriptor)
         
@@ -50,7 +50,7 @@ class RayMarchingQuad {
                     let index = (x * size * size + y * size + z) * 4
                     
                     let noiseValue = layeredNoise3D(x: (Float(x)+seed)*frequency, y: (Float(y)+seed)*frequency, lacunarity: 1.5, persistance: 0.7, octaves: 10, seed: (Float(z)+seed)*frequency)
-                    
+                                        
                     noiseData[index + 0] = noiseValue
                     noiseData[index + 1] = noiseValue
                     noiseData[index + 2] = noiseValue

@@ -211,8 +211,8 @@ extension Renderer: MTKViewDelegate {
         
         let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm,
-            width: Int(view.drawableSize.width/8),
-            height: Int(view.drawableSize.height/8),
+            width: Int(view.drawableSize.width/4),
+            height: Int(view.drawableSize.height/4),
             mipmapped: false
         )
         textureDescriptor.usage = [.shaderWrite, .shaderRead]
@@ -229,6 +229,7 @@ extension Renderer: MTKViewDelegate {
         let samplerDescriptor = MTLSamplerDescriptor()
         samplerDescriptor.minFilter = .linear
         samplerDescriptor.magFilter = .linear
+        samplerDescriptor.mipFilter = .linear
         samplerDescriptor.sAddressMode = .clampToEdge
         samplerDescriptor.tAddressMode = .clampToEdge
 
@@ -249,8 +250,8 @@ extension Renderer: MTKViewDelegate {
             
             let threadsPerThreadgroup = MTLSizeMake(threads, threads, 1)
             let threadgroups = MTLSizeMake(
-                (Int(Renderer.width/4) + threads-1) / threads,
-                (Int(Renderer.height/4) + threads-1) / threads,
+                (Int(outputTexture.width) + threads-1) / threads,
+                (Int(outputTexture.height) + threads-1) / threads,
                 1)
             
             computeEncoder.setComputePipelineState(computePipelineState)
